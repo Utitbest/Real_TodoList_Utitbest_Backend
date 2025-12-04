@@ -129,8 +129,16 @@ const send = (res, status, data) => {
 const server = createServer(async (req, res) => {
   const { url, method } = req;
 
+  if (method === "OPTIONS") {
+    res.writeHead(200, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    });
+    return res.end();
+  }
+
   try {
-    // GET ALL TASKS
     if (url === "/todo" && method === "GET") {
       try {
         const result = await db.query("SELECT * FROM task ORDER BY order_index ASC");
@@ -140,7 +148,6 @@ const server = createServer(async (req, res) => {
       }
     }
 
-    // ADD TASK
     else if (url === "/todo" && method === "POST") {
       let body = "";
       req.on("data", chunk => (body += chunk));
@@ -170,7 +177,6 @@ const server = createServer(async (req, res) => {
       });
     }
 
-    // CLEAR COMPLETED
     else if (url === "/todo/clear" && method === "DELETE") {
       try {
         const result = await db.query("DELETE FROM task WHERE completed = true");
@@ -183,7 +189,6 @@ const server = createServer(async (req, res) => {
       }
     }
 
-    // UPDATE COMPLETED STATUS
     else if (url.startsWith("/todo/") && method === "PUT" && !url.includes("order")) {
       const id = parseInt(url.split("/").pop(), 10);
       if (isNaN(id)) return send(res, 400, { error: "Invalid task ID" });
@@ -211,7 +216,6 @@ const server = createServer(async (req, res) => {
       });
     }
 
-    // REORDER TASKS
     else if (url === "/todo/order" && method === "PUT") {
       let body = "";
       req.on("data", chunk => (body += chunk));
